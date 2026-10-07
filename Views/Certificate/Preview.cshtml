@@ -1,0 +1,409 @@
+@model MailSender.Models.CertificateSettings
+
+@{
+    ViewData["Title"] = "Certificate Preview";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">
+            Certificate Preview
+        </h2>
+
+        <p class="text-muted mb-0">
+            Check how the student name appears on the certificate.
+        </p>
+    </div>
+
+    <a asp-action="Setup"
+       class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>
+        Back to Setup
+    </a>
+</div>
+
+
+<div class="row g-4">
+
+    <!-- ===================================================== -->
+    <!-- PREVIEW -->
+    <!-- ===================================================== -->
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white py-3">
+                <strong>
+                    <i class="bi bi-image me-2"></i>
+                    Preview
+                </strong>
+            </div>
+
+            <div class="card-body">
+
+                <div class="certificate-preview text-center">
+
+                    <img id="certificatePreview"
+                         src=""
+                         alt="Certificate Preview"
+                         class="img-fluid"
+                         style="max-width: 100%; height: auto;" />
+
+                    <div id="previewLoading"
+                         class="text-muted py-5"
+                         style="display: none;">
+
+                        <div class="spinner-border text-primary mb-3"
+                             role="status">
+                        </div>
+
+                        <div>
+                            Generating preview...
+                        </div>
+
+                    </div>
+
+                    <div id="previewError"
+                         class="alert alert-danger mt-3"
+                         style="display: none;">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- CONTROLS -->
+    <!-- ===================================================== -->
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white py-3">
+                <strong>
+                    <i class="bi bi-sliders me-2"></i>
+                    Preview Controls
+                </strong>
+            </div>
+
+
+            <div class="card-body">
+
+                <!-- Student Name -->
+
+                <label for="studentName"
+                       class="form-label fw-semibold">
+
+                    Student Name
+
+                </label>
+
+                <input type="text"
+                       id="studentName"
+                       class="form-control mb-3"
+                       value="Student Name"
+                       placeholder="Enter student name" />
+
+
+                <!-- Update Preview -->
+
+                <button type="button"
+                        id="updatePreview"
+                        class="btn btn-primary w-100">
+
+                    <i class="bi bi-arrow-repeat me-2"></i>
+
+                    Update Preview
+
+                </button>
+
+
+                <hr />
+
+
+                <!-- Current Settings -->
+
+                <h6 class="fw-bold">
+                    Current Settings
+                </h6>
+
+
+                <div class="preview-settings">
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>X Position</span>
+                        <strong>@Model.X</strong>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Y Position</span>
+                        <strong>@Model.Y</strong>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Font</span>
+                        <strong>@Model.FontFamily</strong>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Size</span>
+                        <strong>@Model.FontSize px</strong>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Color</span>
+                        <strong>@Model.Color</strong>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Alignment</span>
+                        <strong>@Model.Alignment</strong>
+                    </div>
+
+                </div>
+
+
+                <!-- Adjust Position -->
+
+                <a asp-action="Setup"
+                   class="btn btn-outline-primary w-100 mt-4">
+
+                    <i class="bi bi-pencil me-2"></i>
+
+                    Adjust Position
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const nameInput =
+                document.getElementById("studentName");
+
+            const previewImage =
+                document.getElementById("certificatePreview");
+
+            const updateButton =
+                document.getElementById("updatePreview");
+
+            const loading =
+                document.getElementById("previewLoading");
+
+            const errorBox =
+                document.getElementById("previewError");
+
+
+            // =====================================================
+            // Generate Preview
+            // =====================================================
+
+            async function generatePreview() {
+
+                const name =
+                    nameInput.value.trim() || "Student Name";
+
+
+                // Clear previous error
+
+                errorBox.style.display = "none";
+                errorBox.textContent = "";
+
+
+                // Show loading
+
+                loading.style.display = "block";
+
+                previewImage.style.display = "none";
+
+                updateButton.disabled = true;
+
+
+                try {
+
+                    const formData = new FormData();
+
+
+                    // Student name
+
+                    formData.append(
+                        "studentName",
+                        name
+                    );
+
+
+                    // Certificate settings
+
+                    formData.append(
+                        "settings.X",
+                        "@Model.X"
+                    );
+
+                    formData.append(
+                        "settings.Y",
+                        "@Model.Y"
+                    );
+
+                    formData.append(
+                        "settings.FontSize",
+                        "@Model.FontSize"
+                    );
+
+                    formData.append(
+                        "settings.FontFamily",
+                        "@Model.FontFamily"
+                    );
+
+                    formData.append(
+                        "settings.Color",
+                        "@Model.Color"
+                    );
+
+                    formData.append(
+                        "settings.Alignment",
+                        "@Model.Alignment"
+                    );
+
+
+                    // Send request
+
+                    const response =
+                        await fetch(
+                            '@Url.Action("Preview", "Certificate")',
+                            {
+                                method: "POST",
+                                body: formData
+                            }
+                        );
+
+
+                    // Check HTTP response
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "Server returned HTTP " +
+                            response.status
+                        );
+
+                    }
+
+
+                    const result =
+                        await response.json();
+
+
+                    console.log(
+                        "Preview response:",
+                        result
+                    );
+
+
+                    // Check application response
+
+                    if (!result.success) {
+
+                        throw new Error(
+                            result.message ||
+                            "Preview generation failed."
+                        );
+
+                    }
+
+
+                    // Make sure image exists
+
+                    if (!result.image) {
+
+                        throw new Error(
+                            "Preview image was not returned by the server."
+                        );
+
+                    }
+
+
+                    // Set image
+
+                    previewImage.src =
+                        result.image;
+
+
+                    // Show image
+
+                    previewImage.style.display =
+                        "block";
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Preview error:",
+                        error
+                    );
+
+
+                    errorBox.textContent =
+                        error.message ||
+                        "Unable to generate certificate preview.";
+
+
+                    errorBox.style.display =
+                        "block";
+
+                }
+                finally {
+
+                    loading.style.display =
+                        "none";
+
+                    updateButton.disabled =
+                        false;
+
+                }
+
+            }
+
+
+            // =====================================================
+            // Update Preview Button
+            // =====================================================
+
+            updateButton.addEventListener(
+                "click",
+                generatePreview
+            );
+
+
+            // =====================================================
+            // Automatically Generate Initial Preview
+            // =====================================================
+
+            generatePreview();
+
+        });
+
+    </script>
+}

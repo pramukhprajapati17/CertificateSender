@@ -1,0 +1,1590 @@
+@model List<MailSender.Models.Student>
+
+@{
+    ViewData["Title"] = "Students";
+
+    var totalStudents = Model?.Count ?? 0;
+
+    var pendingCount = Model?.Count(x =>
+        string.IsNullOrWhiteSpace(x.Status) ||
+        string.Equals(
+            x.Status,
+            "Pending",
+            StringComparison.OrdinalIgnoreCase)) ?? 0;
+
+    var successCount = Model?.Count(x =>
+        string.Equals(
+            x.Status,
+            "Success",
+            StringComparison.OrdinalIgnoreCase)) ?? 0;
+
+    var failedCount = Model?.Count(x =>
+        string.Equals(
+            x.Status,
+            "Failed",
+            StringComparison.OrdinalIgnoreCase)) ?? 0;
+}
+
+
+<div class="container-fluid py-4">
+
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                Students
+            </h2>
+
+            <p class="text-muted mb-0">
+                Manage and send student certificates.
+            </p>
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <!-- BACK -->
+
+            <a asp-controller="Certificate"
+               asp-action="Setup"
+               class="btn btn-outline-secondary">
+
+                ← Back
+
+            </a>
+
+
+            <!-- SEND ALL -->
+
+            <form id="sendAllForm"
+                  asp-controller="Certificate"
+                  asp-action="SendAll"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <button id="sendAllButton"
+                        type="submit"
+                        class="btn btn-primary">
+
+                    <span id="sendAllButtonText">
+                        Send All
+                    </span>
+
+                </button>
+
+            </form>
+
+
+            <!-- DOWNLOAD -->
+
+            <a asp-controller="Certificate"
+               asp-action="DownloadResult"
+               class="btn btn-success">
+
+                Download Excel
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- SEND ALL PROGRESS PANEL -->
+    <!-- ===================================================== -->
+
+    <div id="sendProgressPanel"
+         class="card border-0 shadow-sm mb-4 d-none">
+
+        <div class="card-body p-4">
+
+            <!-- HEADER -->
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Sending Certificates
+                    </h5>
+
+                    <div id="progressMessage"
+                         class="text-muted">
+
+                        Preparing...
+
+                    </div>
+
+                </div>
+
+
+                <!-- PAUSE / RESUME -->
+
+                <div class="d-flex gap-2">
+
+                    <button id="pauseButton"
+                            type="button"
+                            class="btn btn-warning">
+
+                        ⏸ Pause
+
+                    </button>
+
+
+                    <button id="resumeButton"
+                            type="button"
+                            class="btn btn-success d-none">
+
+                        ▶ Resume
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- CURRENT STUDENT -->
+
+            <div class="p-3 bg-light rounded mb-3">
+
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+
+                        <small class="text-muted d-block">
+                            Currently Sending
+                        </small>
+
+                        <div id="currentStudent"
+                             class="fw-bold fs-5">
+
+                            —
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <small class="text-muted d-block">
+                            Email
+                        </small>
+
+                        <div id="currentEmail">
+
+                            —
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <small class="text-muted d-block">
+                            Status
+                        </small>
+
+                        <div id="currentStatus"
+                             class="fw-semibold">
+
+                            Preparing...
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PROGRESS -->
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <span class="text-muted">
+                    Progress
+                </span>
+
+                <strong id="progressCount">
+                    0 / 0
+                </strong>
+
+            </div>
+
+
+            <div class="progress"
+                 style="height: 12px;">
+
+                <div id="progressBar"
+                     class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar"
+                     style="width: 0%;">
+
+                </div>
+
+            </div>
+
+
+            <!-- COUNTERS -->
+
+            <div class="d-flex gap-4 mt-3">
+
+                <span class="text-success">
+                    ✓ Sent:
+                    <strong id="progressSuccessCount">
+                        0
+                    </strong>
+                </span>
+
+
+                <span class="text-danger">
+                    ✕ Failed:
+                    <strong id="progressFailedCount">
+                        0
+                    </strong>
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STATISTICS CARDS -->
+    <!-- ===================================================== -->
+
+    <div class="row g-3 mb-4">
+
+
+        <!-- ALL -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                All Students
+                            </p>
+
+                            <h2 class="fw-bold mb-0">
+                                @totalStudents
+                            </h2>
+
+                        </div>
+
+
+                        <div class="rounded-circle bg-primary bg-opacity-10
+                                    d-flex align-items-center justify-content-center"
+                             style="width:55px;height:55px;">
+
+                            <span class="fs-4">
+                                👥
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PENDING -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Pending
+                            </p>
+
+                            <h2 class="fw-bold mb-0">
+                                @pendingCount
+                            </h2>
+
+                        </div>
+
+
+                        <div class="rounded-circle bg-warning bg-opacity-10
+                                    d-flex align-items-center justify-content-center"
+                             style="width:55px;height:55px;">
+
+                            <span class="fs-4">
+                                ⏳
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SENT -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Sent Successfully
+                            </p>
+
+                            <h2 class="fw-bold mb-0">
+                                @successCount
+                            </h2>
+
+                        </div>
+
+
+                        <div class="rounded-circle bg-success bg-opacity-10
+                                    d-flex align-items-center justify-content-center"
+                             style="width:55px;height:55px;">
+
+                            <span class="fs-4">
+                                ✓
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FAILED -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <p class="text-muted mb-1">
+                                Failed
+                            </p>
+
+                            <h2 class="fw-bold mb-0">
+                                @failedCount
+                            </h2>
+
+                        </div>
+
+
+                        <div class="rounded-circle bg-danger bg-opacity-10
+                                    d-flex align-items-center justify-content-center"
+                             style="width:55px;height:55px;">
+
+                            <span class="fs-4">
+                                !
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STUDENT TABLE -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm">
+
+        <!-- TABLE HEADER -->
+
+        <div class="card-header bg-white border-0 py-3">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+
+                    <h5 class="fw-bold mb-1">
+                        Student List
+                    </h5>
+
+                    <small class="text-muted">
+                        Send certificates individually or use Send All.
+                    </small>
+
+                </div>
+
+
+                <span class="badge bg-dark">
+                    @totalStudents Students
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- TABLE -->
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0 align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th class="px-3">
+                                #
+                            </th>
+
+                            <th>
+                                Name
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Sent At
+                            </th>
+
+                            <th>
+                                Error
+                            </th>
+
+                            <th class="text-center">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var student in Model)
+                            {
+                                <tr id="student-row-@student.RowNumber">
+
+                                    <!-- ROW -->
+
+                                    <td class="px-3">
+
+                                        @student.RowNumber
+
+                                    </td>
+
+
+                                    <!-- NAME -->
+
+                                    <td>
+
+                                        <strong>
+                                            @student.Name
+                                        </strong>
+
+                                    </td>
+
+
+                                    <!-- EMAIL -->
+
+                                    <td>
+
+                                        @student.Email
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+
+                                    <td class="student-status">
+
+                                        @if (string.Equals(
+                                            student.Status,
+                                            "Success",
+                                            StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-success">
+
+                                                ✓ Success
+
+                                            </span>
+                                        }
+                                        else if (string.Equals(
+                                            student.Status,
+                                            "Failed",
+                                            StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <span class="badge bg-danger">
+
+                                                ✕ Failed
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+
+                                                ⏳ Pending
+
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- SENT AT -->
+
+                                    <td>
+
+                                        @if (student.SentAt.HasValue)
+                                        {
+                                            @student.SentAt.Value.ToString(
+                                                "dd-MM-yyyy hh:mm tt")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                —
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ERROR -->
+
+                                    <td>
+
+                                        @if (!string.IsNullOrWhiteSpace(student.Error))
+                                        {
+                                            <span class="text-danger"
+                                                  title="@student.Error">
+
+                                                @student.Error
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+
+                                                —
+
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ACTION -->
+
+                                    <td class="text-center">
+
+                                        @if (string.Equals(
+                                            student.Status,
+                                            "Success",
+                                            StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-success btn-sm"
+                                                    disabled>
+
+                                                ✓ Sent
+
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <form asp-controller="Certificate"
+                                                  asp-action="SendIndividual"
+                                                  method="post"
+                                                  class="individual-send-form">
+
+                                                @Html.AntiForgeryToken()
+
+
+                                                <input type="hidden"
+                                                       name="rowNumber"
+                                                       value="@student.RowNumber" />
+
+
+                                                <button type="submit"
+                                                        class="btn btn-primary btn-sm send-button"
+                                                        data-name="@student.Name">
+
+                                                    Send
+
+                                                </button>
+
+                                            </form>
+                                        }
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+
+                                <td colspan="7"
+                                    class="text-center py-5">
+
+                                    <div class="text-muted">
+
+                                        No students found.
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- SWEETALERT2 -->
+<!-- ===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
+
+@section Scripts
+{
+
+<script>
+
+    // =====================================================
+    // VARIABLES
+    // =====================================================
+
+    let progressTimer = null;
+
+    let sendAllStarted = false;
+
+
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
+
+    const sendAllForm =
+        document.getElementById("sendAllForm");
+
+    const sendAllButton =
+        document.getElementById("sendAllButton");
+
+    const sendAllButtonText =
+        document.getElementById("sendAllButtonText");
+
+    const progressPanel =
+        document.getElementById("sendProgressPanel");
+
+    const pauseButton =
+        document.getElementById("pauseButton");
+
+    const resumeButton =
+        document.getElementById("resumeButton");
+
+
+    // =====================================================
+    // SEND ALL CONFIRMATION
+    // =====================================================
+
+    sendAllForm.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const result = await Swal.fire({
+
+                title: "Send All Certificates?",
+
+                text:
+                    "All pending and failed certificates will be processed.",
+
+                icon: "question",
+
+                showCancelButton: true,
+
+                confirmButtonText:
+                    "Yes, Start Sending",
+
+                cancelButtonText:
+                    "Cancel",
+
+                confirmButtonColor:
+                    "#0d6efd",
+
+                cancelButtonColor:
+                    "#6c757d",
+
+                reverseButtons:
+                    true
+
+            });
+
+
+            if (!result.isConfirmed) {
+
+                return;
+
+            }
+
+
+            // =========================================
+            // SHOW PROGRESS
+            // =========================================
+
+            progressPanel.classList.remove(
+                "d-none"
+            );
+
+
+            sendAllButton.disabled =
+                true;
+
+
+            sendAllButtonText.textContent =
+                "Sending...";
+
+
+            sendAllStarted =
+                true;
+
+
+            // =========================================
+            // DISABLE INDIVIDUAL BUTTONS
+            // =========================================
+
+            document
+                .querySelectorAll(".send-button")
+                .forEach(function (button) {
+
+                    button.disabled = true;
+
+                });
+
+
+            // =========================================
+            // START POLLING
+            // =========================================
+
+            startProgressPolling();
+
+
+            // =========================================
+            // ACTUALLY SUBMIT FORM
+            // =========================================
+
+            sendAllForm.submit();
+
+        }
+    );
+
+
+    // =====================================================
+    // PROGRESS POLLING
+    // =====================================================
+
+    function startProgressPolling() {
+
+        if (progressTimer !== null) {
+
+            clearInterval(
+                progressTimer
+            );
+
+        }
+
+
+        progressTimer =
+            setInterval(
+                async function () {
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                '@Url.Action("SendProgress", "Certificate")',
+                                {
+                                    cache: "no-store"
+                                }
+                            );
+
+
+                        if (!response.ok) {
+
+                            return;
+
+                        }
+
+
+                        const data =
+                            await response.json();
+
+
+                        updateProgress(
+                            data
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Progress error:",
+                            error
+                        );
+
+                    }
+
+                },
+                700
+            );
+
+    }
+
+
+    // =====================================================
+    // UPDATE PROGRESS
+    // =====================================================
+
+    function updateProgress(data) {
+
+        progressPanel.classList.remove(
+            "d-none"
+        );
+
+
+        // =========================================
+        // CURRENT STUDENT
+        // =========================================
+
+        document.getElementById(
+            "currentStudent"
+        ).textContent =
+            data.currentName || "—";
+
+
+        // =========================================
+        // CURRENT EMAIL
+        // =========================================
+
+        document.getElementById(
+            "currentEmail"
+        ).textContent =
+            data.currentEmail || "—";
+
+
+        // =========================================
+        // CURRENT STATUS
+        // =========================================
+
+        const currentStatus =
+            document.getElementById(
+                "currentStatus"
+            );
+
+
+        currentStatus.textContent =
+            data.currentStatus || "—";
+
+
+        currentStatus.className =
+            "fw-semibold";
+
+
+        if (data.currentStatus === "Success") {
+
+            currentStatus.classList.add(
+                "text-success"
+            );
+
+        }
+        else if (data.currentStatus === "Failed") {
+
+            currentStatus.classList.add(
+                "text-danger"
+            );
+
+        }
+        else if (data.currentStatus === "Sending...") {
+
+            currentStatus.classList.add(
+                "text-primary"
+            );
+
+        }
+
+
+        // =========================================
+        // MESSAGE
+        // =========================================
+
+        document.getElementById(
+            "progressMessage"
+        ).textContent =
+            data.message || "";
+
+
+        // =========================================
+        // PROGRESS COUNT
+        // =========================================
+
+        document.getElementById(
+            "progressCount"
+        ).textContent =
+            data.processed +
+            " / " +
+            data.total;
+
+
+        // =========================================
+        // PROGRESS BAR
+        // =========================================
+
+        const progressBar =
+            document.getElementById(
+                "progressBar"
+            );
+
+
+        progressBar.style.width =
+            data.percentage + "%";
+
+
+        progressBar.setAttribute(
+            "aria-valuenow",
+            data.percentage
+        );
+
+
+        // =========================================
+        // COUNTERS
+        // =========================================
+
+        document.getElementById(
+            "progressSuccessCount"
+        ).textContent =
+            data.success;
+
+
+        document.getElementById(
+            "progressFailedCount"
+        ).textContent =
+            data.failed;
+
+
+        // =========================================
+        // PAUSE / RESUME
+        // =========================================
+
+        if (data.isPaused) {
+
+            pauseButton.classList.add(
+                "d-none"
+            );
+
+            resumeButton.classList.remove(
+                "d-none"
+            );
+
+        }
+        else {
+
+            pauseButton.classList.remove(
+                "d-none"
+            );
+
+            resumeButton.classList.add(
+                "d-none"
+            );
+
+        }
+
+
+        // =========================================
+        // COMPLETED
+        // =========================================
+
+        if (!data.isRunning &&
+            data.currentStatus === "Completed") {
+
+            if (progressTimer !== null) {
+
+                clearInterval(
+                    progressTimer
+                );
+
+                progressTimer = null;
+
+            }
+
+
+            pauseButton.classList.add(
+                "d-none"
+            );
+
+
+            resumeButton.classList.add(
+                "d-none"
+            );
+
+
+            progressBar.classList.remove(
+                "progress-bar-animated"
+            );
+
+
+            progressBar.classList.add(
+                "bg-success"
+            );
+
+
+            // =====================================
+            // SHOW COMPLETION ALERT
+            // =====================================
+
+            Swal.fire({
+
+                icon: "success",
+
+                title: "Sending Completed",
+
+                html:
+                    "<b>" +
+                    data.success +
+                    "</b> certificates sent successfully.<br>" +
+
+                    "<b>" +
+                    data.failed +
+                    "</b> certificates failed.",
+
+                confirmButtonText:
+                    "OK",
+
+                confirmButtonColor:
+                    "#198754"
+
+            }).then(function () {
+
+                window.location.reload();
+
+            });
+
+        }
+
+    }
+
+
+    // =====================================================
+    // PAUSE
+    // =====================================================
+
+    pauseButton.addEventListener(
+        "click",
+        async function () {
+
+            const result =
+                await Swal.fire({
+
+                    title:
+                        "Pause Sending?",
+
+                    text:
+                        "The current email operation will finish, then sending will pause.",
+
+                    icon:
+                        "warning",
+
+                    showCancelButton:
+                        true,
+
+                    confirmButtonText:
+                        "Yes, Pause",
+
+                    cancelButtonText:
+                        "Cancel",
+
+                    confirmButtonColor:
+                        "#f0ad4e",
+
+                    cancelButtonColor:
+                        "#6c757d",
+
+                    reverseButtons:
+                        true
+
+                });
+
+
+            if (!result.isConfirmed) {
+
+                return;
+
+            }
+
+
+            const token =
+                document.querySelector(
+                    '#sendAllForm input[name="__RequestVerificationToken"]'
+                ).value;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        '@Url.Action("PauseSending", "Certificate")',
+                        {
+
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "Content-Type":
+                                    "application/x-www-form-urlencoded",
+
+                                "RequestVerificationToken":
+                                    token
+                            }
+
+                        }
+                    );
+
+
+                if (response.ok) {
+
+                    await Swal.fire({
+
+                        icon:
+                            "info",
+
+                        title:
+                            "Sending Paused",
+
+                        text:
+                            "Sending will remain paused until you resume it.",
+
+                        confirmButtonText:
+                            "OK",
+
+                        confirmButtonColor:
+                            "#0d6efd"
+
+                    });
+
+                }
+
+            }
+            catch (error) {
+
+                Swal.fire({
+
+                    icon:
+                        "error",
+
+                    title:
+                        "Error",
+
+                    text:
+                        "Unable to pause sending."
+
+                });
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // RESUME
+    // =====================================================
+
+    resumeButton.addEventListener(
+        "click",
+        async function () {
+
+            const result =
+                await Swal.fire({
+
+                    title:
+                        "Resume Sending?",
+
+                    text:
+                        "Sending will continue with the next student.",
+
+                    icon:
+                        "question",
+
+                    showCancelButton:
+                        true,
+
+                    confirmButtonText:
+                        "Yes, Resume",
+
+                    cancelButtonText:
+                        "Cancel",
+
+                    confirmButtonColor:
+                        "#198754",
+
+                    cancelButtonColor:
+                        "#6c757d",
+
+                    reverseButtons:
+                        true
+
+                });
+
+
+            if (!result.isConfirmed) {
+
+                return;
+
+            }
+
+
+            const token =
+                document.querySelector(
+                    '#sendAllForm input[name="__RequestVerificationToken"]'
+                ).value;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        '@Url.Action("ResumeSending", "Certificate")',
+                        {
+
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "Content-Type":
+                                    "application/x-www-form-urlencoded",
+
+                                "RequestVerificationToken":
+                                    token
+                            }
+
+                        }
+                    );
+
+
+                if (response.ok) {
+
+                    Swal.fire({
+
+                        icon:
+                            "success",
+
+                        title:
+                            "Sending Resumed",
+
+                        text:
+                            "Certificate sending has resumed.",
+
+                        timer:
+                            1200,
+
+                        showConfirmButton:
+                            false
+
+                    });
+
+                }
+
+            }
+            catch (error) {
+
+                Swal.fire({
+
+                    icon:
+                        "error",
+
+                    title:
+                        "Error",
+
+                    text:
+                        "Unable to resume sending."
+
+                });
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // INDIVIDUAL SEND
+    // =====================================================
+
+    document
+        .querySelectorAll(".individual-send-form")
+        .forEach(function (form) {
+
+            form.addEventListener(
+                "submit",
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const button =
+                        form.querySelector(
+                            ".send-button"
+                        );
+
+
+                    const name =
+                        button.getAttribute(
+                            "data-name"
+                        );
+
+
+                    // =================================
+                    // SWEETALERT CONFIRMATION
+                    // =================================
+
+                    const result =
+                        await Swal.fire({
+
+                            title:
+                                "Send Certificate?",
+
+                            text:
+                                "Send certificate to " +
+                                name +
+                                "?",
+
+                            icon:
+                                "question",
+
+                            showCancelButton:
+                                true,
+
+                            confirmButtonText:
+                                "Yes, Send",
+
+                            cancelButtonText:
+                                "Cancel",
+
+                            confirmButtonColor:
+                                "#0d6efd",
+
+                            cancelButtonColor:
+                                "#6c757d",
+
+                            reverseButtons:
+                                true
+
+                        });
+
+
+                    if (!result.isConfirmed) {
+
+                        return;
+
+                    }
+
+
+                    // =================================
+                    // BUTTON LOADING
+                    // =================================
+
+                    button.disabled =
+                        true;
+
+
+                    button.innerHTML =
+                        `
+                        <span
+                            class="spinner-border spinner-border-sm me-1"
+                            role="status">
+                        </span>
+                        Sending...
+                        `;
+
+
+                    // =================================
+                    // SUBMIT FORM
+                    // =================================
+
+                    form.submit();
+
+                }
+            );
+
+        });
+
+
+    // =====================================================
+    // TEMP DATA SUCCESS MESSAGE
+    // =====================================================
+
+    @if (TempData["Success"] != null)
+    {
+        <text>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                Swal.fire({
+
+                    icon:
+                        "success",
+
+                    title:
+                        "Success",
+
+                    text:
+                        @Html.Raw(
+                            System.Text.Json.JsonSerializer.Serialize(
+                                TempData["Success"]?.ToString()
+                            )
+                        ),
+
+                    confirmButtonText:
+                        "OK",
+
+                    confirmButtonColor:
+                        "#198754"
+
+                });
+
+            }
+        );
+
+        </text>
+    }
+
+
+    // =====================================================
+    // TEMP DATA ERROR MESSAGE
+    // =====================================================
+
+    @if (TempData["Error"] != null)
+    {
+        <text>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                Swal.fire({
+
+                    icon:
+                        "error",
+
+                    title:
+                        "Error",
+
+                    text:
+                        @Html.Raw(
+                            System.Text.Json.JsonSerializer.Serialize(
+                                TempData["Error"]?.ToString()
+                            )
+                        ),
+
+                    confirmButtonText:
+                        "OK",
+
+                    confirmButtonColor:
+                        "#dc3545"
+
+                });
+
+            }
+        );
+
+        </text>
+    }
+
+</script>
+
+}

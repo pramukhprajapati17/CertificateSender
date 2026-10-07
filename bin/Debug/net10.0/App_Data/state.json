@@ -1,0 +1,13 @@
+{
+  "TemplatePath": "D:\\MailSender\\wwwroot\\uploads\\certificate_template.jpeg",
+  "ExcelPath": "D:\\MailSender\\wwwroot\\uploads\\students_33ddf36fd5fd4accbc57ad35f86f36d1.xlsx",
+  "ResultExcelPath": null,
+  "CertificateSettings": {
+    "X": 800,
+    "Y": 500,
+    "FontSize": 45,
+    "FontFamily": "Times New Roman",
+    "Color": "#0c153c",
+    "Alignment": "Center"
+  }
+}

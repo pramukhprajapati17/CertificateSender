@@ -1,0 +1,467 @@
+
+@using MailSender.Models
+@model CertificateSettings
+
+@{
+    ViewData["Title"] = "Certificate Setup";
+
+    var state =
+        ViewBag.State as WorkspaceState;
+}
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="fw-bold mb-1">
+            Certificate Setup
+        </h2>
+
+        <p class="text-muted mb-0">
+            Upload your files and configure certificate text.
+        </p>
+    </div>
+
+</div>
+
+
+<div class="row g-4">
+
+    <!-- ===================================================== -->
+    <!-- FILE UPLOAD -->
+    <!-- ===================================================== -->
+
+    <div class="col-lg-6">
+
+        <div class="card shadow-sm border-0 h-100">
+
+            <div class="card-header bg-white border-0 pt-4 px-4">
+
+                <h5 class="fw-bold">
+
+                    <i class="bi bi-cloud-arrow-up text-primary me-2"></i>
+
+                    Upload Files
+
+                </h5>
+
+            </div>
+
+
+            <div class="card-body px-4">
+
+                <form asp-controller="Certificate"
+                      asp-action="Upload"
+                      method="post"
+                      enctype="multipart/form-data">
+
+                    @Html.AntiForgeryToken()
+
+
+                    <div class="upload-box mb-4">
+
+                        <i class="bi bi-image fs-1 text-primary"></i>
+
+                        <h6 class="mt-2">
+                            Certificate Template
+                        </h6>
+
+                        <p class="small text-muted">
+                            PNG, JPG or JPEG
+                        </p>
+
+
+                        <input type="file"
+                               name="certificateImage"
+                               class="form-control"
+                               accept=".png,.jpg,.jpeg" />
+
+                    </div>
+
+
+                    <div class="upload-box mb-4">
+
+                        <i class="bi bi-file-earmark-excel fs-1 text-success"></i>
+
+                        <h6 class="mt-2">
+                            Student Excel File
+                        </h6>
+
+                        <p class="small text-muted">
+                            Excel file containing Name and Email columns
+                        </p>
+
+
+                        <input type="file"
+                               name="excelFile"
+                               class="form-control"
+                               accept=".xlsx" />
+
+                    </div>
+
+
+                    <button type="submit"
+                            class="btn btn-primary w-100">
+
+                        <i class="bi bi-upload me-2"></i>
+
+                        Upload Files
+
+                    </button>
+
+                </form>
+
+
+                @if (state != null)
+                {
+                    <div class="mt-4">
+
+                        <div class="file-status">
+
+                            <i class="bi bi-image text-primary"></i>
+
+                            <div>
+
+                                <strong>Certificate</strong>
+
+                                <small>
+                                    @(string.IsNullOrEmpty(state.TemplatePath)
+                                        ? "Not uploaded"
+                                        : "Uploaded")
+                                </small>
+
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(state.TemplatePath))
+                            {
+                                <span class="badge bg-success">
+                                    Ready
+                                </span>
+                            }
+
+                        </div>
+
+
+                        <div class="file-status">
+
+                            <i class="bi bi-file-earmark-excel text-success"></i>
+
+                            <div>
+
+                                <strong>Student Excel</strong>
+
+                                <small>
+                                    @(string.IsNullOrEmpty(state.ExcelPath)
+                                        ? "Not uploaded"
+                                        : "Uploaded")
+                                </small>
+
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(state.ExcelPath))
+                            {
+                                <span class="badge bg-success">
+                                    Ready
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- CERTIFICATE SETTINGS -->
+    <!-- ===================================================== -->
+
+    <div class="col-lg-6">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-header bg-white border-0 pt-4 px-4">
+
+                <h5 class="fw-bold">
+
+                    <i class="bi bi-sliders text-primary me-2"></i>
+
+                    Name Settings
+
+                </h5>
+
+            </div>
+
+
+            <div class="card-body px-4">
+
+                <form asp-controller="Certificate"
+                      asp-action="SaveSettings"
+                      method="post">
+
+                    @Html.AntiForgeryToken()
+
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <label asp-for="X"
+                                   class="form-label fw-semibold">
+                                X Position
+                            </label>
+
+                            <input asp-for="X"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label asp-for="Y"
+                                   class="form-label fw-semibold">
+                                Y Position
+                            </label>
+
+                            <input asp-for="Y"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="col-md-8">
+
+                            <label asp-for="FontFamily"
+                                   class="form-label fw-semibold">
+                                Font Family
+                            </label>
+
+                            <select asp-for="FontFamily"
+                                    class="form-select">
+
+                                <option value="Arial">
+                                    Arial
+                                </option>
+
+                                <option value="Times New Roman">
+                                    Times New Roman
+                                </option>
+
+                                <option value="Georgia">
+                                    Georgia
+                                </option>
+
+                                <option value="Verdana">
+                                    Verdana
+                                </option>
+
+                                <option value="Calibri">
+                                    Calibri
+                                </option>
+
+                                <option value="Tahoma">
+                                    Tahoma
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <label asp-for="FontSize"
+                                   class="form-label fw-semibold">
+                                Font Size
+                            </label>
+
+                            <input asp-for="FontSize"
+                                   type="number"
+                                   min="1"
+                                   class="form-control" />
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label asp-for="Color"
+                                   class="form-label fw-semibold">
+                                Text Color
+                            </label>
+
+                            <div class="input-group">
+
+                                <input asp-for="Color"
+                                       type="text"
+                                       class="form-control"
+                                       id="colorText" />
+
+                                <input type="color"
+                                       class="form-control form-control-color"
+                                       id="colorPicker"
+                                       value="@Model.Color" />
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label asp-for="Alignment"
+                                   class="form-label fw-semibold">
+                                Alignment
+                            </label>
+
+                            <select asp-for="Alignment"
+                                    class="form-select">
+
+                                <option value="Left">
+                                    Left
+                                </option>
+
+                                <option value="Center">
+                                    Center
+                                </option>
+
+                                <option value="Right">
+                                    Right
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="submit"
+                            class="btn btn-primary w-100 mt-4">
+
+                        <i class="bi bi-save me-2"></i>
+
+                        Save Settings
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <!-- ACTIONS -->
+
+        <div class="row g-3 mt-1">
+
+            <div class="col-6">
+
+                <a asp-controller="Certificate"
+                   asp-action="Preview"
+                   class="btn btn-outline-primary w-100">
+
+                    <i class="bi bi-eye me-2"></i>
+                    Preview
+
+                </a>
+
+            </div>
+
+
+            <div class="col-6">
+
+                <a asp-controller="Certificate"
+                   asp-action="Students"
+                   class="btn btn-outline-success w-100">
+
+                    <i class="bi bi-people me-2"></i>
+                    Students
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- RESET -->
+<!-- ========================================================= -->
+
+<div class="text-end mt-4">
+
+    <form asp-controller="Certificate"
+          asp-action="Reset"
+          method="post"
+          class="d-inline">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reset the complete workspace?');">
+
+            <i class="bi bi-trash me-2"></i>
+
+            Reset Workspace
+
+        </button>
+
+    </form>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        const colorPicker =
+            document.getElementById("colorPicker");
+
+        const colorText =
+            document.getElementById("colorText");
+
+
+        if (colorPicker && colorText)
+        {
+            colorPicker.addEventListener(
+                "input",
+                function ()
+                {
+                    colorText.value =
+                        colorPicker.value;
+                });
+
+
+            colorText.addEventListener(
+                "input",
+                function ()
+                {
+                    if (
+                        /^#[0-9A-F]{6}$/i.test(
+                            colorText.value)
+                    )
+                    {
+                        colorPicker.value =
+                            colorText.value;
+                    }
+                });
+        }
+
+    </script>
+}
